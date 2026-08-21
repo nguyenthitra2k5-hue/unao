@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        AI Nhận Diện U Não
+    </title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+
+            margin: 0;
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+            background:
+                #07111f;
+
+            color:
+                white;
+        }
+
+        header {
+
+            text-align:
+                center;
+
+            padding:
+                25px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #075985,
+                    #0891b2
+                );
+        }
+
+        header h1 {
+
+            margin:
+                0;
+
+            font-size:
+                34px;
+        }
+
+        header p {
+
+            margin-top:
+                10px;
+
+            opacity:
+                0.9;
+        }
+
+        .container {
+
+            width:
+                94%;
+
+            max-width:
+                1400px;
+
+            margin:
+                30px auto;
+        }
+
+        .upload-card {
+
+            background:
+                #111d2e;
+
+            padding:
+                30px;
+
+            border-radius:
+                18px;
+
+            text-align:
+                center;
+
+            box-shadow:
+                0 8px 25px
+                rgba(0, 0, 0, 0.3);
+        }
+
+        .upload-card h2 {
+
+            margin-top:
+                0;
+
+            font-size:
+                28px;
+        }
+
+        input[type="file"] {
+
+            background:
+                white;
+
+            color:
+                black;
+
+            padding:
+                12px;
+
+            border-radius:
+                8px;
+
+            width:
+                350px;
+
+            max-width:
+                100%;
+        }
+
+        button {
+
+            margin-top:
+                20px;
+
+            padding:
+                14px 35px;
+
+            border:
+                none;
+
+            border-radius:
+                10px;
+
+            background:
+                #06b6d4;
+
+            color:
+                white;
+
+            font-size:
+                18px;
+
+            font-weight:
+                bold;
+
+            cursor:
+                pointer;
+        }
+
+        button:hover {
+
+            background:
+                #0891b2;
+        }
+
+        .message {
+
+            margin-top:
+                20px;
+
+            color:
+                #ffcc66;
+
+            font-weight:
+                bold;
+        }
+
+        .images {
+
+            margin-top:
+                30px;
+
+            display:
+                grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap:
+                25px;
+        }
+
+        .card {
+
+            background:
+                #111d2e;
+
+            border-radius:
+                18px;
+
+            padding:
+                20px;
+
+            box-shadow:
+                0 8px 25px
+                rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+
+            text-align:
+                center;
+
+            margin-top:
+                5px;
+
+            font-size:
+                28px;
+        }
+
+        .image-box {
+
+            background:
+                black;
+
+            border-radius:
+                12px;
+
+            overflow:
+                hidden;
+
+            display:
+                flex;
+
+            justify-content:
+                center;
+
+            align-items:
+                center;
+        }
+
+        .image-box img {
+
+            width:
+                100%;
+
+            max-height:
+                650px;
+
+            object-fit:
+                contain;
+
+            display:
+                block;
+        }
+
+        .result-info {
+
+            margin-top:
+                30px;
+
+            background:
+                #111d2e;
+
+            padding:
+                25px;
+
+            border-radius:
+                18px;
+        }
+
+        .result-info h2 {
+
+            margin-top:
+                0;
+        }
+
+        .detected {
+
+            padding:
+                15px;
+
+            background:
+                rgba(255, 0, 0, 0.15);
+
+            border-left:
+                5px solid red;
+
+            border-radius:
+                8px;
+
+            margin-bottom:
+                15px;
+        }
+
+        .no-detection {
+
+            padding:
+                15px;
+
+            background:
+                rgba(0, 255, 120, 0.12);
+
+            border-left:
+                5px solid #00ff88;
+
+            border-radius:
+                8px;
+        }
+
+        .detection-item {
+
+            background:
+                #18283d;
+
+            padding:
+                15px;
+
+            margin-top:
+                12px;
+
+            border-radius:
+                10px;
+        }
+
+        .confidence {
+
+            color:
+                #ffcc66;
+
+            font-size:
+                20px;
+
+            font-weight:
+                bold;
+        }
+
+        .warning {
+
+            margin-top:
+                25px;
+
+            padding:
+                15px;
+
+            border-left:
+                5px solid #ffc107;
+
+            background:
+                #3a3217;
+
+            border-radius:
+                8px;
+
+            line-height:
+                1.6;
+        }
+
+        @media
+        (max-width: 900px) {
+
+            .images {
+
+                grid-template-columns:
+                    1fr;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header>
+
+    <h1>
+        🧠 AI Nhận Diện U Não
+    </h1>
+
+    <p>
+        Hệ thống nhận diện vùng nghi ngờ
+        trên ảnh MRI bằng YOLO
+    </p>
+
+</header>
+
+
+<div class="container">
+
+    <!-- ========================= -->
+    <!-- UPLOAD ẢNH -->
+    <!-- ========================= -->
+
+    <div class="upload-card">
+
+        <h2>
+            Tải ảnh MRI
+        </h2>
+
+        <form
+            method="POST"
+            enctype="multipart/form-data"
+        >
+
+            <input
+                type="file"
+                name="image"
+                accept="image/*"
+                required
+            >
+
+            <br>
+
+            <button type="submit">
+                🔍 Nhận diện
+            </button>
+
+        </form>
+
+        {% if message %}
+
+        <div class="message">
+
+            {{ message }}
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- ẢNH -->
+    <!-- ========================= -->
+
+    {% if original_image %}
+
+    <div class="images">
+
+        <!-- ẢNH GỐC -->
+
+        <div class="card">
+
+            <h2>
+                Ảnh MRI gốc
+            </h2>
+
+            <div class="image-box">
+
+                <img
+                    src="{{ original_image }}"
+                    alt="Ảnh MRI gốc"
+                >
+
+            </div>
+
+        </div>
+
+
+        <!-- KẾT QUẢ AI -->
+
+        <div class="card">
+
+            <h2>
+                Kết quả AI
+            </h2>
+
+            <div class="image-box">
+
+                <img
+                    src="{{ result_image }}"
+                    alt="Kết quả nhận diện"
+                >
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- KẾT QUẢ -->
+    <!-- ========================= -->
+
+    <div class="result-info">
+
+        <h2>
+            Kết quả phân tích
+        </h2>
+
+
+        {% if detections|length > 0 %}
+
+        <div class="detected">
+
+            ⚠ Phát hiện vùng nghi ngờ U Não
+
+        </div>
+
+        <p>
+
+            Số vùng phát hiện:
+
+            <strong>
+                {{ detections|length }}
+            </strong>
+
+        </p>
+
+
+        {% for item in detections %}
+
+        <div class="detection-item">
+
+            <strong>
+                Nhãn:
+            </strong>
+
+            {{ item.class }}
+
+            <br><br>
+
+            <strong>
+                Độ tin cậy:
+            </strong>
+
+            <span class="confidence">
+
+                {{ item.confidence }}%
+
+            </span>
+
+        </div>
+
+        {% endfor %}
+
+
+        {% else %}
+
+        <div class="no-detection">
+
+            ✓ Model không phát hiện vùng
+            vượt ngưỡng confidence.
+
+        </div>
+
+        {% endif %}
+
+
+        <div class="warning">
+
+            ⚠ Kết quả AI chỉ phục vụ
+            nghiên cứu và minh họa.
+            Không sử dụng kết quả này
+            thay thế chẩn đoán của bác sĩ.
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+</body>
+
+</html>
