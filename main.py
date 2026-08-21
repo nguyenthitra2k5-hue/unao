@@ -177,3 +177,4 @@ print("Nhan phim bat ky de dong cua so...")
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()
+/*gnfbdv*/
