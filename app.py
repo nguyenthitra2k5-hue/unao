@@ -151,3 +151,4 @@ print("Nhấn phím bất kỳ để đóng.")
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()
+/* mô hình nhận diện u não*/
