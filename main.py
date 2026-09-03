@@ -6,12 +6,11 @@ import os
 # CẤU HÌNH
 # =========================
 MODEL_PATH = "best.pt"
-VIDEO_PATH = "Phẫu thuật thành công khối u não kích thước lớn.mp4"
+IMAGE_PATH = "123.jpg"
+OUTPUT_PATH = "ket_qua_u_nao.jpg"
 
-CONFIDENCE = 0.7
+CONFIDENCE = 0.4
 IMG_SIZE = 640
-
-OUTPUT_PATH = "ket_qua_video_u_nao.mp4"
 
 # =========================
 # KIỂM TRA FILE
@@ -20,8 +19,8 @@ if not os.path.exists(MODEL_PATH):
     print(f"Không tìm thấy model: {MODEL_PATH}")
     exit()
 
-if not os.path.exists(VIDEO_PATH):
-    print(f"Không tìm thấy video: {VIDEO_PATH}")
+if not os.path.exists(IMAGE_PATH):
+    print(f"Không tìm thấy ảnh: {IMAGE_PATH}")
     exit()
 
 # =========================
@@ -31,208 +30,169 @@ print("Đang tải model...")
 
 model = YOLO(MODEL_PATH)
 
-print("Các nhãn:")
+print("Các nhãn của model:")
 print(model.names)
 
-# =========================
-# MỞ VIDEO
-# =========================
-cap = cv2.VideoCapture(VIDEO_PATH)
 
-if not cap.isOpened():
-    print("Không mở được video.")
+# =========================
+# ĐỌC ẢNH
+# =========================
+img = cv2.imread(IMAGE_PATH)
+
+if img is None:
+    print("Không đọc được ảnh.")
     exit()
 
-# Lấy thông tin video
-fps = cap.get(cv2.CAP_PROP_FPS)
-
-width = int(
-    cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+# =========================
+# NHẬN DIỆN
+# =========================
+results = model.predict(
+    source=img,
+    conf=CONFIDENCE,
+    imgsz=IMG_SIZE,
+    verbose=False
 )
 
-height = int(
-    cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-)
-
-total_frames = int(
-    cap.get(cv2.CAP_PROP_FRAME_COUNT)
-)
-
-print("FPS:", fps)
-print("Kích thước:", width, "x", height)
-print("Tổng frame:", total_frames)
+detection_count = 0
 
 # =========================
-# TẠO VIDEO OUTPUT
+# XỬ LÝ KẾT QUẢ
 # =========================
-fourcc = cv2.VideoWriter_fourcc(
-    *"mp4v"
-)
+for result in results:
 
-writer = cv2.VideoWriter(
-    OUTPUT_PATH,
-    fourcc,
-    fps,
-    (width, height)
-)
+    if result.boxes is None:
+        continue
 
-frame_count = 0
+    for box in result.boxes:
 
-# =========================
-# XỬ LÝ VIDEO
-# =========================
-while True:
+        detection_count += 1
 
-    ret, frame = cap.read()
-
-    if not ret:
-        break
-
-    frame_count += 1
-
-    # =========================
-    # YOLO NHẬN DIỆN
-    # =========================
-    results = model.predict(
-        source=frame,
-        conf=CONFIDENCE,
-        imgsz=IMG_SIZE,
-        verbose=False
-    )
-
-    detection_count = 0
-
-    for result in results:
-
-        if result.boxes is None:
-            continue
-
-        for box in result.boxes:
-
-            x1, y1, x2, y2 = map(
-                int,
-                box.xyxy[0]
-            )
-
-            confidence = float(
-                box.conf[0]
-            )
-
-            class_id = int(
-                box.cls[0]
-            )
-
-            class_name = "U Nao"
-
-            detection_count += 1
-
-            # =========================
-            # VẼ KHUNG
-            # =========================
-            cv2.rectangle(
-                frame,
-                (x1, y1),
-                (x2, y2),
-                (0, 0, 255),
-                2
-            )
-
-            label = (
-                f"{class_name} "
-                f"{confidence * 100:.1f}%"
-            )
-
-            (text_width, text_height), _ = cv2.getTextSize(
-                label,
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                2
-            )
-
-            text_y = max(
-                y1 - 10,
-                text_height + 10
-            )
-
-            # Nền đỏ
-            cv2.rectangle(
-                frame,
-                (x1, text_y - text_height - 10),
-                (x1 + text_width + 10, text_y + 5),
-                (0, 0, 255),
-                -1
-            )
-
-            # Chữ trắng
-            cv2.putText(
-                frame,
-                label,
-                (x1 + 5, text_y - 3),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (255, 255, 255),
-                2
-            )
-
-    # =========================
-    # TRẠNG THÁI
-    # =========================
-    if detection_count > 0:
-
-        status = (
-            f"PHAT HIEN "
-            f"{detection_count} "
-            f"VUNG U NAO"
+        # Tọa độ bounding box
+        x1, y1, x2, y2 = map(
+            int,
+            box.xyxy[0]
         )
 
-        color = (0, 0, 255)
+        # Confidence
+        confidence = float(box.conf[0])
 
-    else:
+        # Class ID
+        class_id = int(box.cls[0])
 
-        status = "KHONG CO DETECTION"
+        # Class gốc của model
+        original_class = model.names[class_id]
 
-        color = (0, 255, 0)
+        # Tên hiển thị
+        class_name = "U Nao"
+
+        # =========================
+        # VẼ KHUNG
+        # =========================
+        cv2.rectangle(
+            img,
+            (x1, y1),
+            (x2, y2),
+            (0, 0, 255),
+            3
+        )
+
+        # =========================
+        # LABEL
+        # =========================
+        label = f"{class_name} {confidence * 100:.1f}%"
+
+        (text_width, text_height), _ = cv2.getTextSize(
+            label,
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            2
+        )
+
+        text_y = max(
+            y1 - 10,
+            text_height + 10
+        )
+
+        # Nền đỏ cho label
+        cv2.rectangle(
+            img,
+            (x1, text_y - text_height - 10),
+            (x1 + text_width + 10, text_y + 5),
+            (0, 0, 255),
+            -1
+        )
+
+        # Chữ trắng
+        cv2.putText(
+            img,
+            label,
+            (x1 + 5, text_y - 3),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (255, 255, 255),
+            2
+        )
+
+        print(
+            f"Phát hiện: {original_class} | "
+            f"Confidence: {confidence * 100:.2f}%"
+        )
+
+# =========================
+# TRẠNG THÁI
+# =========================
+if detection_count > 0:
+
+    status = f"PHAT HIEN {detection_count} VUNG NGHI NGO U NAO"
 
     cv2.putText(
-        frame,
+        img,
         status,
         (20, 40),
         cv2.FONT_HERSHEY_SIMPLEX,
-        1,
-        color,
-        3
+        0.8,
+        (0, 0, 255),
+        2
     )
 
-    # =========================
-    # GHI VIDEO
-    # =========================
-    writer.write(frame)
+else:
 
-    # =========================
-    # HIỂN THỊ
-    # =========================
-    cv2.imshow(
-        "Nhan dien U Nao - Video",
-        frame
+    status = "KHONG PHAT HIEN VUNG NGHI NGO"
+
+    cv2.putText(
+        img,
+        status,
+        (20, 40),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.8,
+        (0, 255, 0),
+        2
     )
-
-    print(
-        f"\rĐang xử lý frame "
-        f"{frame_count}/{total_frames}",
-        end=""
-    )
-
-    # Nhấn Q để dừng
-    if cv2.waitKey(1) & 0xFF == ord("q"):
-        break
 
 # =========================
-# GIẢI PHÓNG
+# LƯU ẢNH
 # =========================
-cap.release()
-writer.release()
-cv2.destroyAllWindows()
+cv2.imwrite(
+    OUTPUT_PATH,
+    img
+)
 
 print()
-print("Hoàn thành.")
-print("Video kết quả:", OUTPUT_PATH)
+print("==============================")
+print("KẾT QUẢ")
+print("==============================")
+print("Số vùng phát hiện:", detection_count)
+print("Ảnh kết quả:", OUTPUT_PATH)
+
+# =========================
+# HIỂN THỊ
+# =======================
+cv2.imshow(
+    "AI Nhan Dien U Nao",
+    img
+)
+
+print("Nhấn phím bất kỳ để thoát.")
+
+cv2.waitKey(0)
+cv2.destroyAllWindows()
